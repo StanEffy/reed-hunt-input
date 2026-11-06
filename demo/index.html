@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reed Hunt Input</title>
+    <meta name="description" content="A digit input you fill with a double-barrelled shotgun. Works in plain JS, React and Vue." />
+    <meta property="og:title" content="Reed Hunt Input" />
+    <meta property="og:description" content="Shoot the digits of your card number. Limited ammo. Top-ups available." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'><rect width='8' height='8' fill='%234f86d1'/><rect x='1' y='5' width='6' height='3' fill='%2386a443'/><rect x='3' y='1' width='2' height='3' fill='%23fff6d5'/></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./demo.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <p class="eyebrow">reed-hunt-input</p>
+      <h1>The input field nobody asked for</h1>
+      <p class="lede">
+        Digits fly up out of the reeds. Shoot one and it lands in the next slot. The red cross erases the last
+        digit. You get 20% more ammo than you need. Run out and the free ammo is over, but for just €1&nbsp;…
+      </p>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en" aria-pressed="true">EN</button>
+        <button type="button" data-lang="ru" aria-pressed="false">RU</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <div class="tabs" role="tablist" aria-label="Format"></div>
+        <div id="playground"></div>
+        <p class="readout">value: <code id="readout">""</code></p>
+      </section>
+
+      <section class="install">
+        <h2>Install</h2>
+        <pre><code>npm i reed-hunt-input</code></pre>
+        <div class="grid">
+          <div>
+            <h3>React</h3>
+            <pre><code>import { ReedHuntInput, reedHuntFormats } from 'reed-hunt-input/react';
+
+const [card, setCard] = useState('');
+
+&lt;ReedHuntInput
+  format={reedHuntFormats.card}
+  value={card}
+  onValueChange={setCard}
+/&gt;</code></pre>
+            <div id="react-demo" class="mini"></div>
+          </div>
+          <div>
+            <h3>Vue</h3>
+            <pre><code>import { ReedHuntInput, reedHuntFormats } from 'reed-hunt-input/vue';
+
+&lt;ReedHuntInput
+  v-model="pin"
+  :format="reedHuntFormats.pin"
+  @complete="unlock"
+/&gt;</code></pre>
+            <div id="vue-demo" class="mini"></div>
+          </div>
+        </div>
+        <h3>Plain JS</h3>
+        <pre><code>import { createReedHunt, reedHuntFormats } from 'reed-hunt-input';
+
+createReedHunt(document.querySelector('#amount'), {
+  format: reedHuntFormats.amount,
+  onChange: (digits) => console.log(digits),
+});</code></pre>
+      </section>
+    </main>
+
+    <footer>
+      <a href="https://github.com/StanEffy/reed-hunt-input">GitHub</a> ·
+      <a href="https://www.npmjs.com/package/reed-hunt-input">npm</a> · MIT · No real money is taken. Probably.
+    </footer>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

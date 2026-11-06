@@ -1,0 +1,143 @@
+:root {
+  --bg: #f3f1ea;
+  --ink: #16181d;
+  --muted: #5d636e;
+  --panel: #ffffff;
+  --line: #16181d;
+  --code-bg: #16181d;
+  --code-ink: #e8e4d6;
+  --accent: #f2b705;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0f1114;
+    --ink: #eceef2;
+    --muted: #9aa1ad;
+    --panel: #171a1f;
+    --line: #eceef2;
+    --code-bg: #07080a;
+    --code-ink: #e8e4d6;
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+.hero,
+main,
+footer {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.hero {
+  padding-top: 3rem;
+  padding-bottom: 1.5rem;
+}
+.eyebrow {
+  margin: 0 0 0.5rem;
+  font-family: Silkscreen, monospace;
+  color: var(--muted);
+}
+h1 {
+  margin: 0;
+  font-family: Silkscreen, monospace;
+  font-weight: 400;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1.1;
+}
+.lede {
+  max-width: 60ch;
+  margin: 1rem 0 0;
+  color: var(--muted);
+}
+
+.lang,
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.lang {
+  margin-top: 1.25rem;
+}
+.lang button,
+.tabs button {
+  padding: 0.4rem 0.8rem;
+  font: 600 0.9rem Inter, system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--panel);
+  border: 2px solid var(--line);
+  cursor: pointer;
+}
+.lang button[aria-pressed='true'],
+.tabs button[aria-selected='true'] {
+  color: var(--bg);
+  background: var(--ink);
+}
+
+.card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  box-shadow: 6px 6px 0 var(--line);
+}
+.readout {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  color: var(--muted);
+}
+
+.install {
+  margin: 3rem 0;
+}
+h2,
+h3 {
+  font-family: Silkscreen, monospace;
+  font-weight: 400;
+}
+h2 {
+  font-size: 1.6rem;
+  margin: 0 0 1rem;
+}
+h3 {
+  margin: 1.5rem 0 0.5rem;
+}
+pre {
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+  background: var(--code-bg);
+  color: var(--code-ink);
+  font-size: 0.85rem;
+  border: 2px solid var(--line);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
+  gap: 1.5rem;
+}
+.mini {
+  margin-top: 1rem;
+}
+
+footer {
+  padding-bottom: 3rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+footer a {
+  color: inherit;
+}
