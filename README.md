@@ -7,8 +7,8 @@ top up (the marsh gets gloomier every time). On the last level ammo trickles bac
 now and then something flies out of the far end of the lake, straight at you. Two hits stop it.
 If it gets through, you start over from the very beginning.
 
-Card numbers, phone numbers, PINs, one-time codes, money amounts with a currency sign, or any
-digits. Plain JS, React and Vue. No dependencies, no image assets: everything is drawn on a
+Card numbers, phone numbers, PINs, one-time codes, money amounts with a currency sign, any
+digits, or a CAPTCHA nobody will forget ([see below](#as-a-captcha)). Plain JS, React and Vue. No dependencies, no image assets: everything is drawn on a
 192×108 canvas.
 
 **[Play with the demo →](https://staneffy.github.io/reed-hunt-input/)**
@@ -209,6 +209,26 @@ It's also exported as strings: `reedHuntCss`, `reedHuntBaseCss`, `reedHuntThemeC
 - Shells left in your pouch are shown as `x18` in the corner.
 - Levels: the marsh, then rain, then a storm under a red moon, then fire. The fire is the last
   one: no more top-ups, one round comes back every 10 seconds, and something lives in the lake.
+
+## As a CAPTCHA
+
+"Shoot four digits to prove you're human" makes a memorable gate for low-stakes things: a
+newsletter form, a comments box, a "yes, delete my account" confirmation, a hackathon demo.
+
+```tsx
+<ReedHuntInput
+  label="Prove you're human"
+  format={{ kind: 'mask', mask: '####' }}
+  allowTyping={false}
+  onComplete={() => setHuman(true)}
+/>
+```
+
+Know what it is: a speed bump, not a lock. Everything happens in the browser, so a bot can
+write into the hidden field or skip the widget altogether. For anything that matters, keep a real
+check on the server (rate limits, a proper CAPTCHA) and use this on top of it. And
+`allowTyping={false}` locks out people who use a keyboard or a screen reader, so offer them
+another way through.
 
 ## Should I use this in production?
 

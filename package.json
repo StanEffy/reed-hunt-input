@@ -1,7 +1,7 @@
 {
   "name": "reed-hunt-input",
   "version": "0.1.0",
-  "description": "A digit input you fill with a double-barrelled shotgun. Pixel-art marsh, flying digits, limited ammo. Works in plain JS, React and Vue.",
+  "description": "A digit input you fill with a double-barrelled shotgun: card numbers, phones, PINs, codes, or a joke CAPTCHA. Pixel-art marsh, limited ammo. Plain JS, React and Vue.",
   "keywords": [
     "input",
     "otp",
@@ -13,7 +13,11 @@
     "react",
     "vue",
     "canvas",
-    "joke"
+    "joke",
+    "captcha",
+    "human-verification",
+    "otp-input",
+    "pin-input"
   ],
   "license": "MIT",
   "author": "StanEffy",
