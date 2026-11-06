@@ -866,6 +866,13 @@ export class ReedHuntGame {
       m.flash > 0
         ? { w: '#ffffff', b: '#ffffff', e: '#ff2a2a' }
         : { w: '#3a1424', b: '#1a0a12', e: Math.floor(m.age * 4) % 2 ? '#ff2a2a' : '#ff6a55' };
+    // An ember-coloured rim, so it stands out against the dark sky of the burning marsh
+    const rim = m.flash > 0 ? '#ffffff' : '#c8502e';
+    frame.forEach((row, ry) =>
+      [...row].forEach((ch, rx) => {
+        if (ch !== '.') this.px(ox + rx * scale - 1, oy + ry * scale - 1, scale + 2, scale + 2, rim);
+      }),
+    );
     frame.forEach((row, ry) =>
       [...row].forEach((ch, rx) => {
         if (ch !== '.') this.px(ox + rx * scale, oy + ry * scale, scale, scale, colors[ch]);

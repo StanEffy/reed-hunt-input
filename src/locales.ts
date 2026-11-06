@@ -12,7 +12,7 @@ export interface ReedHuntTexts {
   currency: string;
 }
 
-export type ReedHuntLocale = 'en' | 'ru' | 'uk' | 'es';
+export type ReedHuntLocale = 'en' | 'fi' | 'ru' | 'uk' | 'es';
 
 export const reedHuntLocales: Record<ReedHuntLocale, ReedHuntTexts> = {
   en: {
@@ -26,6 +26,18 @@ export const reedHuntLocales: Record<ReedHuntLocale, ReedHuntTexts> = {
     retry: 'Try again',
     ammoLeft: (n) => `${n} rounds left`,
     currency: 'Currency',
+  },
+  fi: {
+    hint: 'Ammu numeroita. Punainen risti pyyhkii viimeisen. Oikea klikkaus lataa aseen.',
+    gameOver: 'Game over',
+    outOfAmmo: 'Ilmaiset panokset loppuivat.',
+    dontWorry: 'Mutta älä huoli: saat lisää panoksia vain yhdellä eurolla.',
+    refill: 'Täydennä 1 €',
+    refilling: 'Käsitellään…',
+    eaten: 'Järvestä nousi jotain, ja se sai sinut kiinni.',
+    retry: 'Yritä uudelleen',
+    ammoLeft: (n) => `panoksia: ${n}`,
+    currency: 'Valuutta',
   },
   ru: {
     hint: 'Стреляй по цифрам. Красный крестик стирает последнюю. Правый клик — перезарядка.',

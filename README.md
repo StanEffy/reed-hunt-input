@@ -100,7 +100,7 @@ new group, anything else is shown as is), `{ kind: 'amount', maxDigits: 6 }` or
 | `onRefill` / `:refill` | says yes after 0.7 s | The "€1" button. Resolve `true` to start the next level. **No payment is made by the package** |
 | `onComplete` / `@complete` | | Every slot of a mask is filled |
 | `onGameOver` / `@game-over` | | Gets the reason: `'ammo'` (out of ammo, input not done) or `'eaten'` (final level) |
-| `locale` | `'en'` | Built-in texts: `'en'`, `'ru'`, `'uk'`, `'es'` (all in `reedHuntLocales`) |
+| `locale` | `'en'` | Built-in texts: `'en'`, `'fi'`, `'ru'`, `'uk'`, `'es'` (all in `reedHuntLocales`) |
 | `texts` | | Overrides on top of the locale: `hint`, `gameOver`, `outOfAmmo`, `dontWorry`, `refill`, `refilling`, `eaten`, `retry`, `ammoLeft(n)`, `currency` |
 | `theme` | `'auto'` | `'light'`, `'dark'` (the marsh turns to dusk) |
 | `speed` | `1` | Flight speed multiplier |

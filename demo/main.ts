@@ -8,36 +8,36 @@ const MODES: { key: string; tab: Words; label: Words; format: ReedHuntFormat }[]
   {
     key: 'card',
     format: reedHuntFormats.card,
-    tab: { en: 'Card', ru: 'Карта', uk: 'Картка', es: 'Tarjeta' },
-    label: { en: 'Card number', ru: 'Номер карты', uk: 'Номер картки', es: 'Número de tarjeta' },
+    tab: { en: 'Card', fi: 'Kortti', ru: 'Карта', uk: 'Картка', es: 'Tarjeta' },
+    label: { en: 'Card number', fi: 'Kortin numero', ru: 'Номер карты', uk: 'Номер картки', es: 'Número de tarjeta' },
   },
   {
     key: 'phone',
     format: reedHuntFormats.phoneFi,
-    tab: { en: 'Phone', ru: 'Телефон', uk: 'Телефон', es: 'Teléfono' },
-    label: { en: 'Phone number', ru: 'Номер телефона', uk: 'Номер телефону', es: 'Número de teléfono' },
+    tab: { en: 'Phone', fi: 'Puhelin', ru: 'Телефон', uk: 'Телефон', es: 'Teléfono' },
+    label: { en: 'Phone number', fi: 'Puhelinnumero', ru: 'Номер телефона', uk: 'Номер телефону', es: 'Número de teléfono' },
   },
   {
     key: 'code',
     format: reedHuntFormats.code,
-    tab: { en: 'Code', ru: 'Код', uk: 'Код', es: 'Código' },
-    label: { en: 'Verification code', ru: 'Код подтверждения', uk: 'Код підтвердження', es: 'Código de verificación' },
+    tab: { en: 'Code', fi: 'Koodi', ru: 'Код', uk: 'Код', es: 'Código' },
+    label: { en: 'Verification code', fi: 'Vahvistuskoodi', ru: 'Код подтверждения', uk: 'Код підтвердження', es: 'Código de verificación' },
   },
   {
     key: 'amount',
     format: reedHuntFormats.amount,
-    tab: { en: 'Amount', ru: 'Сумма', uk: 'Сума', es: 'Importe' },
-    label: { en: 'Amount', ru: 'Сумма', uk: 'Сума', es: 'Importe' },
+    tab: { en: 'Amount', fi: 'Summa', ru: 'Сумма', uk: 'Сума', es: 'Importe' },
+    label: { en: 'Amount', fi: 'Summa', ru: 'Сумма', uk: 'Сума', es: 'Importe' },
   },
   {
     key: 'free',
     format: reedHuntFormats.free,
-    tab: { en: 'Free', ru: 'Свободное', uk: 'Довільне', es: 'Libre' },
-    label: { en: 'Any digits', ru: 'Любые цифры', uk: 'Будь-які цифри', es: 'Cualquier dígito' },
+    tab: { en: 'Free', fi: 'Vapaa', ru: 'Свободное', uk: 'Довільне', es: 'Libre' },
+    label: { en: 'Any digits', fi: 'Mitkä tahansa numerot', ru: 'Любые цифры', uk: 'Будь-які цифри', es: 'Cualquier dígito' },
   },
 ];
 
-const LANGS: ReedHuntLocale[] = ['en', 'ru', 'uk', 'es'];
+const LANGS: ReedHuntLocale[] = ['en', 'fi', 'ru', 'uk', 'es'];
 const browserLang = navigator.language.slice(0, 2) as ReedHuntLocale;
 let lang: ReedHuntLocale = LANGS.includes(browserLang) ? browserLang : 'en';
 let mode = MODES[0];
