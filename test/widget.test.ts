@@ -77,7 +77,7 @@ describe('hidden parts', () => {
     document.body.appendChild(h);
     new ReedHunt(h, { format: reedHuntFormats.card });
     expect(h.querySelector<HTMLElement>('.rh-currencies')!.hidden).toBe(true);
-    expect(document.getElementById('reed-hunt-input-styles')!.textContent).toContain('.rh [hidden]');
+    expect(document.getElementById('reed-hunt-input-base')!.textContent).toContain('.rh [hidden]');
     h.remove();
   });
 });

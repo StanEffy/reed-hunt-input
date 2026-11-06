@@ -2,6 +2,7 @@ import { defineComponent, h, onBeforeUnmount, onMounted, ref, watch, type PropTy
 import {
   ReedHunt,
   type GameOverReason,
+  type ReedHuntClassNames,
   type ReedHuntData,
   type ReedHuntLocale,
   type ReedHuntTexts,
@@ -11,7 +12,14 @@ import type { ReedHuntFormat } from './formats';
 
 export { reedHuntFormats } from './formats';
 export type { ReedHuntFormat } from './formats';
-export type { ReedHuntTexts, ReedHuntTheme, ReedHuntLocale, GameOverReason } from './ReedHunt';
+export type {
+  ReedHuntTexts,
+  ReedHuntTheme,
+  ReedHuntLocale,
+  GameOverReason,
+  ReedHuntClassNames,
+  ReedHuntPart,
+} from './ReedHunt';
 export { reedHuntLocales } from './locales';
 
 /**
@@ -39,6 +47,9 @@ export const ReedHuntInput = defineComponent({
     allowTyping: { type: Boolean, default: true },
     theme: { type: String as PropType<ReedHuntTheme>, default: undefined },
     autocomplete: { type: String, default: undefined },
+    /** Extra classes per part; `class` and `style` on the component go to the wrapper element */
+    classNames: { type: Object as PropType<ReedHuntClassNames>, default: undefined },
+    unstyled: { type: Boolean, default: false },
     /** Return (or resolve) true to start the next level after the game over screen */
     refill: { type: Function as PropType<() => boolean | Promise<boolean>>, default: undefined },
     injectStyles: { type: Boolean, default: true },
@@ -70,6 +81,8 @@ export const ReedHuntInput = defineComponent({
       allowTyping: props.allowTyping,
       theme: props.theme,
       autocomplete: props.autocomplete,
+      classNames: props.classNames,
+      unstyled: props.unstyled,
     });
 
     onMounted(() => {

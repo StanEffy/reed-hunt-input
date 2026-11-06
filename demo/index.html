@@ -75,6 +75,28 @@ createReedHunt(document.querySelector('#amount'), {
   format: reedHuntFormats.amount,
   onChange: (digits) => console.log(digits),
 });</code></pre>
+        <h3>Your styles</h3>
+        <p class="note">Built-in styles sit in a cascade layer, so plain CSS like this wins without a fight.</p>
+        <div class="grid">
+          <pre><code>.soft {
+  --rh-accent: #7c3aed;
+  --rh-accent-soft: #ede9fe;
+  --rh-radius: 12px;
+  --rh-stage-border: 0;
+  --rh-stage-shadow: 0 12px 32px rgb(76 29 149 / 0.25);
+  --rh-font-mono: 'Inter', sans-serif;
+}
+.soft .rh-slot[data-state='filled'] {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+}
+
+createReedHunt(el, {
+  format: reedHuntFormats.pin,
+  classNames: { root: 'soft' },
+});</code></pre>
+          <div id="styled-demo"></div>
+        </div>
       </section>
     </main>
 

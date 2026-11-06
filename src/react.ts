@@ -1,9 +1,16 @@
-import { createElement, forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { createElement, forwardRef, useEffect, useImperativeHandle, useRef, type CSSProperties } from 'react';
 import { ReedHunt, type GameOverReason, type ReedHuntData, type ReedHuntOptions } from './ReedHunt';
 
 export { reedHuntFormats } from './formats';
 export type { ReedHuntFormat } from './formats';
-export type { ReedHuntTexts, ReedHuntTheme, ReedHuntLocale, GameOverReason } from './ReedHunt';
+export type {
+  ReedHuntTexts,
+  ReedHuntTheme,
+  ReedHuntLocale,
+  GameOverReason,
+  ReedHuntClassNames,
+  ReedHuntPart,
+} from './ReedHunt';
 export { reedHuntLocales } from './locales';
 
 export interface ReedHuntInputProps extends ReedHuntData {
@@ -13,7 +20,10 @@ export interface ReedHuntInputProps extends ReedHuntData {
   onGameOver?: (reason: GameOverReason) => void;
   onRefill?: () => boolean | Promise<boolean>;
   injectStyles?: boolean;
+  /** Goes on the wrapper element; use `classNames.root` for the widget itself */
   className?: string;
+  /** On the wrapper; handy for --rh-* variables: style={{ '--rh-accent': 'hotpink' }} */
+  style?: CSSProperties & Record<`--${string}`, string | number>;
 }
 
 export interface ReedHuntInputHandle {
@@ -39,6 +49,8 @@ const dataOf = (p: ReedHuntInputProps): ReedHuntData => ({
   allowTyping: p.allowTyping,
   theme: p.theme,
   autocomplete: p.autocomplete,
+  classNames: p.classNames,
+  unstyled: p.unstyled,
 });
 
 /**
@@ -91,7 +103,7 @@ export const ReedHuntInput = forwardRef<ReedHuntInputHandle, ReedHuntInputProps>
     [],
   );
 
-  return createElement('div', { ref: hostRef, className: props.className });
+  return createElement('div', { ref: hostRef, className: props.className, style: props.style });
 });
 
 export default ReedHuntInput;

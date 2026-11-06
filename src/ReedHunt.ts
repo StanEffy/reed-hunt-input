@@ -19,6 +19,32 @@ export const defaultTexts: ReedHuntTexts = reedHuntLocales.en;
 
 export type ReedHuntTheme = 'auto' | 'light' | 'dark';
 
+/** Parts of the widget you can put your own classes on (see `classNames`) */
+export type ReedHuntPart =
+  | 'root'
+  | 'label'
+  | 'currencies'
+  | 'currency'
+  | 'stage'
+  | 'canvas'
+  | 'overlay'
+  | 'overlayTitle'
+  | 'overlayText'
+  | 'refill'
+  | 'field'
+  | 'input'
+  | 'slots'
+  | 'group'
+  | 'slot'
+  | 'literal'
+  | 'display'
+  | 'sign'
+  | 'digits'
+  | 'hint'
+  | 'ammo';
+
+export type ReedHuntClassNames = Partial<Record<ReedHuntPart, string>>;
+
 /** Everything that describes the widget; all optional */
 export interface ReedHuntData {
   /** Digits only, without the mask's literals */
@@ -48,6 +74,10 @@ export interface ReedHuntData {
   /** 'auto' follows prefers-color-scheme; the scene turns to dusk when dark */
   theme?: ReedHuntTheme;
   autocomplete?: string;
+  /** Extra classes per part, added next to the built-in `rh-*` ones (Tailwind, CSS modules…) */
+  classNames?: ReedHuntClassNames;
+  /** Drop the built-in look and keep only the layout that makes it work */
+  unstyled?: boolean;
 }
 
 export interface ReedHuntCallbacks {
@@ -68,7 +98,7 @@ export interface ReedHuntCallbacks {
 }
 
 export interface ReedHuntOptions extends ReedHuntData, ReedHuntCallbacks {
-  /** Set false if you load `reedHuntCss` yourself (e.g. strict CSP) */
+  /** Set false if you load `reed-hunt-input/style.css` yourself (e.g. strict CSP) */
   injectStyles?: boolean;
 }
 
@@ -113,8 +143,10 @@ export class ReedHunt {
   private field: HTMLDivElement;
   private input: HTMLInputElement;
   private view: HTMLDivElement;
+  private hint: HTMLParagraphElement;
   private hintText: HTMLSpanElement;
   private ammoText: HTMLSpanElement;
+  private dark = false;
 
   private game: ReedHuntGame | null = null;
   private value = '';
@@ -133,7 +165,7 @@ export class ReedHunt {
 
   constructor(host: HTMLElement, options: ReedHuntOptions = {}) {
     this.opts = { ...options };
-    if (this.opts.injectStyles !== false) injectStyles(host.ownerDocument);
+    if (this.opts.injectStyles !== false) injectStyles(host.ownerDocument, { theme: !this.opts.unstyled });
     this.inputId = options.id ?? `reed-hunt-${++uid}`;
     this.formatKey = formatKeyOf(this.format);
     this.groups = this.format.kind === 'mask' ? tokenizeMask(this.format.mask) : [];
@@ -173,13 +205,13 @@ export class ReedHunt {
     this.view = el('div');
     this.field.append(this.input, this.view);
 
-    const hint = el('p', 'rh-hint');
-    hint.id = `${this.inputId}-hint`;
+    this.hint = el('p', 'rh-hint');
+    this.hint.id = `${this.inputId}-hint`;
     this.hintText = el('span');
     this.ammoText = el('span', 'rh-ammo');
-    hint.append(this.hintText, ' ', this.ammoText);
+    this.hint.append(this.hintText, ' ', this.ammoText);
 
-    this.root.append(this.label, this.currencies, this.stage, this.field, hint);
+    this.root.append(this.label, this.currencies, this.stage, this.field, this.hint);
     host.appendChild(this.root);
 
     // ----- game -----
@@ -252,6 +284,7 @@ export class ReedHunt {
 
     if (formatChanged || this.totalAmmo !== prevAmmo) this.newGame(0);
     if (this.game && next.speed !== undefined) this.game.options.speed = next.speed;
+    if (next.unstyled === false && this.opts.injectStyles !== false) injectStyles(this.root.ownerDocument);
 
     this.applyTheme();
     this.render();
@@ -426,14 +459,50 @@ export class ReedHunt {
     const dark =
       theme === 'dark' ||
       (theme === 'auto' && typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: dark)').matches);
-    this.root.classList.toggle('rh--dark', dark);
+    this.dark = dark;
+    this.renderRoot();
     this.game?.setDusk(dark);
+  }
+
+  /** Built-in class plus the user's one for a part */
+  private cx(part: ReedHuntPart, base: string) {
+    const extra = this.opts.classNames?.[part];
+    return extra ? `${base} ${extra}` : base;
+  }
+
+  /** Root classes and the state attributes you can style by */
+  private renderRoot() {
+    const o = this.opts;
+    const mods = ['rh'];
+    if (!o.unstyled) mods.push('rh--themed');
+    if (this.dark) mods.push('rh--dark');
+    if (o.disabled) mods.push('rh--disabled');
+    this.root.className = this.cx('root', mods.join(' '));
+    const d = this.root.dataset;
+    d.format = this.format.kind;
+    d.level = String(Math.min(this.level, 3));
+    d.over = this.over ? this.overReason : 'false';
+    d.complete = String(this.format.kind === 'mask' && this.value.length >= digitCapacity(this.format));
+    d.theme = this.dark ? 'dark' : 'light';
   }
 
   private render() {
     const o = this.opts;
     const t = this.texts;
-    this.root.classList.toggle('rh--disabled', !!o.disabled);
+    this.renderRoot();
+
+    this.label.className = this.cx('label', 'rh-label');
+    this.currencies.className = this.cx('currencies', 'rh-currencies');
+    this.stage.className = this.cx('stage', 'rh-stage');
+    this.canvas.className = this.cx('canvas', 'rh-canvas');
+    this.field.className = this.cx('field', 'rh-field');
+    this.input.className = this.cx('input', 'rh-input');
+    this.hint.className = this.cx('hint', 'rh-hint');
+    this.ammoText.className = this.cx('ammo', 'rh-ammo');
+    this.overTitle.className = this.cx('overlayTitle', 'rh-over-title');
+    this.overText1.className = this.cx('overlayText', 'rh-over-text');
+    this.overText2.className = this.cx('overlayText', 'rh-over-text');
+    this.refillBtn.className = this.cx('refill', 'rh-refill');
 
     this.label.textContent = o.label ?? '';
     this.label.hidden = !o.label;
@@ -445,7 +514,7 @@ export class ReedHunt {
     this.currencies.innerHTML = list
       .map(
         (c) =>
-          `<button type="button" role="radio" class="rh-currency" data-currency="${escapeHtml(c)}" aria-checked="${
+          `<button type="button" role="radio" class="${escapeHtml(this.cx('currency', 'rh-currency'))}" data-currency="${escapeHtml(c)}" aria-checked="${
             c === currency
           }"${o.disabled ? ' disabled' : ''}>${escapeHtml(c)}</button>`,
       )
@@ -456,7 +525,6 @@ export class ReedHunt {
     this.input.disabled = !!o.disabled;
     this.input.tabIndex = o.allowTyping === false ? -1 : 0;
 
-    this.stage.dataset.level = String(Math.min(this.level, 3));
     this.renderView();
     this.renderOverlay();
     this.renderHint();
@@ -478,7 +546,8 @@ export class ReedHunt {
     const t = this.texts;
     this.overlay.hidden = !this.over;
     const eaten = this.overReason === 'eaten';
-    this.overlay.classList.toggle('rh-overlay--eaten', eaten);
+    this.overlay.className = this.cx('overlay', eaten ? 'rh-overlay rh-overlay--eaten' : 'rh-overlay');
+    this.renderRoot();
     this.overTitle.textContent = t.gameOver;
     this.overText1.textContent = eaten ? t.eaten : t.outOfAmmo;
     this.overText2.textContent = eaten ? '' : t.dontWorry;
@@ -492,43 +561,47 @@ export class ReedHunt {
     const v = this.value;
     const cap = digitCapacity(f);
     this.syncInput();
+    this.renderRoot(); // data-complete follows the value
 
+    const cls = (part: ReedHuntPart, base: string) => escapeHtml(this.cx(part, base));
     if (f.kind === 'mask') {
-      this.view.className = 'rh-slots';
+      this.view.className = this.cx('slots', 'rh-slots');
       const slot = (i: number) => {
-        const cls = ['rh-slot'];
-        if (cap > 8) cls.push('rh-slot--compact');
-        if (v[i] !== undefined) cls.push('rh-slot--filled');
-        if (i === v.length) cls.push('rh-slot--next');
-        if (i === this.landed) cls.push('rh-slot--landed');
-        return `<span class="${cls.join(' ')}" aria-hidden="true">${v[i] ?? ''}</span>`;
+        const mods = ['rh-slot'];
+        if (cap > 8) mods.push('rh-slot--compact');
+        const state = v[i] !== undefined ? 'filled' : i === v.length ? 'next' : 'empty';
+        if (state !== 'empty') mods.push(`rh-slot--${state}`);
+        if (i === this.landed) mods.push('rh-slot--landed');
+        return `<span class="${cls('slot', mods.join(' '))}" data-state="${state}" data-index="${i}" aria-hidden="true">${
+          v[i] ?? ''
+        }</span>`;
       };
       this.view.innerHTML = this.groups
         .map(
           (g) =>
-            `<span class="rh-group">${g
+            `<span class="${cls('group', 'rh-group')}">${g
               .map((tok) =>
                 tok.type === 'slot'
                   ? slot(tok.index)
                   : tok.type === 'literal'
-                    ? `<span class="rh-literal" aria-hidden="true">${escapeHtml(tok.text)}</span>`
+                    ? `<span class="${cls('literal', 'rh-literal')}" aria-hidden="true">${escapeHtml(tok.text)}</span>`
                     : '',
               )
               .join('')}</span>`,
         )
         .join('');
     } else {
-      this.view.className = 'rh-display';
+      this.view.className = this.cx('display', 'rh-display');
       const sign =
         f.kind === 'amount'
-          ? `<span class="rh-sign" aria-hidden="true">${escapeHtml(this.opts.currency ?? '€')}</span>`
+          ? `<span class="${cls('sign', 'rh-sign')}" aria-hidden="true">${escapeHtml(this.opts.currency ?? '€')}</span>`
           : '';
       const parts = f.kind === 'amount' ? groupThousands(v) : [v];
       const digits = v
         ? parts.map((p) => `<span class="rh-thousands">${p}</span>`).join('')
         : `<span class="rh-placeholder">${f.kind === 'amount' ? '0' : ''}</span>`;
       const caret = v.length < cap ? '<span class="rh-caret"></span>' : '';
-      this.view.innerHTML = `${sign}<span class="rh-digits" aria-hidden="true">${digits}${caret}</span>`;
+      this.view.innerHTML = `${sign}<span class="${cls('digits', 'rh-digits')}" aria-hidden="true">${digits}${caret}</span>`;
       if (this.landed >= 0) {
         void this.view.offsetWidth; // restart the bump animation
         this.view.classList.add('rh-display--bump');

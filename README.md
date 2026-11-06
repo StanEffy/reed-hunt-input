@@ -67,8 +67,7 @@ hunt.update({ disabled: true });
 hunt.destroy();
 ```
 
-Styles are injected automatically on first mount. If your CSP forbids that, pass
-`injectStyles: false` and put the exported `reedHuntCss` string into your own stylesheet.
+Styles are injected automatically on first mount, see [Styling](#styling).
 
 ## Formats
 
@@ -105,10 +104,102 @@ new group, anything else is shown as is), `{ kind: 'amount', maxDigits: 6 }` or
 | `theme` | `'auto'` | `'light'`, `'dark'` (the marsh turns to dusk) |
 | `speed` | `1` | Flight speed multiplier |
 | `allowTyping` | `true` | Click the field and type. Keep it on: it is what keyboard and screen reader users get |
+| `classNames`, `unstyled`, `style` | | See [Styling](#styling) |
 | `label`, `name`, `id`, `disabled`, `autocomplete` | | The usual |
 
-Colours are CSS custom properties on `.rh` (`--rh-ink`, `--rh-surface`, `--rh-accent`, …),
-override them to match your design.
+## Styling
+
+The built-in styles live in the `reed-hunt` [cascade layer](https://developer.mozilla.org/docs/Web/CSS/@layer)
+and are inserted at the very top of `<head>`. So **any CSS of yours wins**, whatever its
+specificity, and no `!important` is needed. That includes Tailwind and other layered CSS.
+
+### 1. CSS variables
+
+The quickest way. Set them on `.rh`, on any parent, or through `style`:
+
+```css
+.checkout .rh {
+  --rh-accent: #7c3aed;
+  --rh-radius: 10px;
+  --rh-stage-shadow: 0 10px 30px rgb(0 0 0 / 0.15);
+  --rh-font-mono: 'JetBrains Mono', monospace;
+}
+```
+
+```tsx
+<ReedHuntInput style={{ '--rh-accent': '#7c3aed', '--rh-radius': '10px' }} />
+```
+
+| Variable | Default | |
+| --- | --- | --- |
+| `--rh-ink`, `--rh-ink-muted` | `#16181d`, `#5d636e` | Text, borders, muted text |
+| `--rh-surface`, `--rh-rule` | `#fff`, `#c9ccd2` | Slot background, empty slot border |
+| `--rh-accent`, `--rh-accent-soft`, `--rh-on-accent` | yellow | Caret, focus, picked currency, landing flash |
+| `--rh-font`, `--rh-font-mono` | system | |
+| `--rh-max-width`, `--rh-gap` | `576px`, `0.6rem` | |
+| `--rh-radius`, `--rh-border-width` | `0px`, `2px` | Everything square and chunky by default |
+| `--rh-stage-border`, `--rh-stage-radius`, `--rh-stage-shadow`, `--rh-stage-shadow-gloomy` | | The game window |
+| `--rh-slot-width`, `--rh-slot-height`, `--rh-slot-font-size`, `--rh-slot-radius` | `2.6rem`, `3rem`, `1.6rem` | |
+| `--rh-slot-compact-width`, `--rh-slot-compact-height`, `--rh-slot-compact-font-size` | | Masks with more than 8 digits (cards) |
+| `--rh-slot-gap`, `--rh-group-gap` | `0.25rem`, `0.75rem` | Between slots, between groups |
+| `--rh-display-height`, `--rh-display-font-size` | | Free and amount formats |
+| `--rh-label-font-size`, `--rh-hint-font-size` | | |
+| `--rh-overlay-bg`, `--rh-overlay-eaten-bg`, `--rh-overlay-ink`, `--rh-overlay-title`, `--rh-refill-bg`, `--rh-refill-ink` | | Game over screen |
+
+Dark mode (`theme: 'dark'`, or `'auto'` with a dark system) adds `.rh--dark`; override the
+colours there too: `.rh.rh--dark { --rh-surface: #000; }`.
+
+### 2. Your own classes per part
+
+`classNames` adds classes next to the built-in `rh-*` ones. Good for Tailwind and CSS modules:
+
+```tsx
+<ReedHuntInput
+  format={reedHuntFormats.pin}
+  classNames={{
+    root: 'gap-3',
+    stage: 'rounded-2xl shadow-xl border-0',
+    slot: 'rounded-lg border-slate-300 data-[state=filled]:border-violet-600',
+    hint: 'text-xs text-slate-500',
+  }}
+/>
+```
+
+Parts: `root`, `label`, `currencies`, `currency`, `stage`, `canvas`, `overlay`, `overlayTitle`,
+`overlayText`, `refill`, `field`, `input`, `slots`, `group`, `slot`, `literal`, `display`,
+`sign`, `digits`, `hint`, `ammo`.
+
+In Vue, `class` and `style` on `<ReedHuntInput>` go to the wrapper element as usual, and the
+`classNames` prop works the same way. In React, `className` and `style` go to the wrapper.
+
+### 3. State you can style by
+
+| Where | Attribute / class |
+| --- | --- |
+| root `.rh` | `data-format="mask \| free \| amount"`, `data-level="0…3"`, `data-over="false \| ammo \| eaten"`, `data-complete`, `data-theme`, `.rh--dark`, `.rh--disabled` |
+| each slot `.rh-slot` | `data-state="empty \| next \| filled"`, `data-index`, `.rh-slot--landed` while it lands |
+| game over `.rh-overlay` | `.rh-overlay--eaten` on the final level |
+
+```css
+.rh[data-complete='true'] .rh-slot { border-color: seagreen; }
+.rh[data-level='3'] .rh-hint { color: crimson; }
+```
+
+### 4. Start from scratch
+
+`unstyled` keeps only what makes it work (layout, the canvas, the hidden input, the overlay
+position) and drops the look. Everything else is yours, through `classNames` or plain CSS on
+the `rh-*` classes.
+
+### 5. Strict CSP or your own bundling
+
+Pass `injectStyles: false` and load the same CSS as a file:
+
+```ts
+import 'reed-hunt-input/style.css';
+```
+
+It's also exported as strings: `reedHuntCss`, `reedHuntBaseCss`, `reedHuntThemeCss`.
 
 ## How to play
 

@@ -84,6 +84,11 @@ document.querySelectorAll<HTMLButtonElement>('[data-lang]').forEach((b) =>
 );
 
 setLang(lang);
+createReedHunt(document.getElementById('styled-demo')!, {
+  format: reedHuntFormats.pin,
+  label: 'PIN, restyled',
+  classNames: { root: 'soft' },
+});
 mountReactDemo(document.getElementById('react-demo')!);
 mountVueDemo(document.getElementById('vue-demo')!);
 if (import.meta.env.DEV) Object.assign(window, { hunt });

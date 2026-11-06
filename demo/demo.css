@@ -141,3 +141,25 @@ footer {
 footer a {
   color: inherit;
 }
+
+.note {
+  margin: 0 0 1rem;
+  color: var(--muted);
+}
+
+/* The restyled example: plain, unlayered CSS beats the built-in layer */
+.soft {
+  --rh-accent: #7c3aed;
+  --rh-accent-soft: #ede9fe;
+  --rh-radius: 12px;
+  --rh-stage-border: 0;
+  --rh-stage-shadow: 0 12px 32px rgb(76 29 149 / 0.25);
+  --rh-font-mono: 'Inter', sans-serif;
+}
+.soft .rh-slot[data-state='filled'] {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+}
+.soft.rh--dark .rh-slot[data-state='filled'] {
+  background: #2e1065;
+}

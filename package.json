@@ -24,7 +24,9 @@
   "homepage": "https://staneffy.github.io/reed-hunt-input/",
   "bugs": "https://github.com/StanEffy/reed-hunt-input/issues",
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -59,13 +61,14 @@
         "default": "./dist/vue.cjs"
       }
     },
+    "./style.css": "./dist/style.css",
     "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node scripts/write-css.mjs",
     "dev": "vite",
     "demo:build": "vite build",
     "test": "vitest run",
