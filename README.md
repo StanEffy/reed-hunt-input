@@ -3,7 +3,9 @@
 **The input field nobody asked for.** Digits fly up out of the reeds; you shoot them with a
 double-barrelled shotgun and they land in the next slot. The red cross erases the last digit.
 You get 20% more ammo than the field needs. Run out and it's game over, but for just €1 you can
-top up (the marsh gets gloomier every time).
+top up (the marsh gets gloomier every time). On the last level ammo trickles back by itself, and
+now and then something flies out of the far end of the lake, straight at you. Two hits stop it.
+If it gets through, you start over from the very beginning.
 
 Card numbers, phone numbers, PINs, one-time codes, money amounts with a currency sign, or any
 digits. Plain JS, React and Vue. No dependencies, no image assets: everything is drawn on a
@@ -97,8 +99,9 @@ new group, anything else is shown as is), `{ kind: 'amount', maxDigits: 6 }` or
 | `ammoFactor` | `1.2` | Rounds = digits × factor, rounded up (card: 20) |
 | `onRefill` / `:refill` | says yes after 0.7 s | The "€1" button. Resolve `true` to start the next level. **No payment is made by the package** |
 | `onComplete` / `@complete` | | Every slot of a mask is filled |
-| `onGameOver` / `@game-over` | | Out of ammo, input not done |
-| `texts` | English | `hint`, `gameOver`, `outOfAmmo`, `dontWorry`, `refill`, `refilling`, `ammoLeft(n)`, `currency` |
+| `onGameOver` / `@game-over` | | Gets the reason: `'ammo'` (out of ammo, input not done) or `'eaten'` (final level) |
+| `locale` | `'en'` | Built-in texts: `'en'`, `'ru'`, `'uk'`, `'es'` (all in `reedHuntLocales`) |
+| `texts` | | Overrides on top of the locale: `hint`, `gameOver`, `outOfAmmo`, `dontWorry`, `refill`, `refilling`, `eaten`, `retry`, `ammoLeft(n)`, `currency` |
 | `theme` | `'auto'` | `'light'`, `'dark'` (the marsh turns to dusk) |
 | `speed` | `1` | Flight speed multiplier |
 | `allowTyping` | `true` | Click the field and type. Keep it on: it is what keyboard and screen reader users get |
@@ -113,6 +116,8 @@ override them to match your design.
 - Two shells in the barrels; it reloads itself when both are spent. Right click reloads early.
 - Hits count only on the digit plate itself. They wobble.
 - Shells left in your pouch are shown as `x18` in the corner.
+- Levels: the marsh, then rain, then a storm under a red moon, then fire. The fire is the last
+  one: no more top-ups, one round comes back every 10 seconds, and something lives in the lake.
 
 ## Should I use this in production?
 

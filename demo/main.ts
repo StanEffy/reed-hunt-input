@@ -1,28 +1,45 @@
-import { createReedHunt, reedHuntFormats, type ReedHuntFormat, type ReedHuntTexts } from '../src';
+import { createReedHunt, reedHuntFormats, type ReedHuntFormat, type ReedHuntLocale } from '../src';
 import { mountReactDemo } from './react-demo';
 import { mountVueDemo } from './vue-demo';
 
-type Lang = 'en' | 'ru';
+type Words = Record<ReedHuntLocale, string>;
 
-const RU: Partial<ReedHuntTexts> = {
-  hint: 'Стреляй по цифрам. Красный крестик стирает последнюю. Правый клик — перезарядка.',
-  outOfAmmo: 'Бесплатные патроны закончились.',
-  dontWorry: 'Но не переживайте: всего за 1 € можно пополнить запас патронов.',
-  refill: 'Пополнить за 1 €',
-  refilling: 'Проводим платёж…',
-  ammoLeft: (n) => `патронов: ${n}`,
-  currency: 'Валюта',
-};
-
-const MODES: { key: string; en: string; ru: string; format: ReedHuntFormat; label: Record<Lang, string> }[] = [
-  { key: 'card', en: 'Card', ru: 'Карта', format: reedHuntFormats.card, label: { en: 'Card number', ru: 'Номер карты' } },
-  { key: 'phone', en: 'Phone', ru: 'Телефон', format: reedHuntFormats.phoneFi, label: { en: 'Phone number', ru: 'Номер телефона' } },
-  { key: 'code', en: 'Code', ru: 'Код', format: reedHuntFormats.code, label: { en: 'Verification code', ru: 'Код подтверждения' } },
-  { key: 'amount', en: 'Amount', ru: 'Сумма', format: reedHuntFormats.amount, label: { en: 'Amount', ru: 'Сумма' } },
-  { key: 'free', en: 'Free', ru: 'Свободное', format: reedHuntFormats.free, label: { en: 'Any digits', ru: 'Любые цифры' } },
+const MODES: { key: string; tab: Words; label: Words; format: ReedHuntFormat }[] = [
+  {
+    key: 'card',
+    format: reedHuntFormats.card,
+    tab: { en: 'Card', ru: 'Карта', uk: 'Картка', es: 'Tarjeta' },
+    label: { en: 'Card number', ru: 'Номер карты', uk: 'Номер картки', es: 'Número de tarjeta' },
+  },
+  {
+    key: 'phone',
+    format: reedHuntFormats.phoneFi,
+    tab: { en: 'Phone', ru: 'Телефон', uk: 'Телефон', es: 'Teléfono' },
+    label: { en: 'Phone number', ru: 'Номер телефона', uk: 'Номер телефону', es: 'Número de teléfono' },
+  },
+  {
+    key: 'code',
+    format: reedHuntFormats.code,
+    tab: { en: 'Code', ru: 'Код', uk: 'Код', es: 'Código' },
+    label: { en: 'Verification code', ru: 'Код подтверждения', uk: 'Код підтвердження', es: 'Código de verificación' },
+  },
+  {
+    key: 'amount',
+    format: reedHuntFormats.amount,
+    tab: { en: 'Amount', ru: 'Сумма', uk: 'Сума', es: 'Importe' },
+    label: { en: 'Amount', ru: 'Сумма', uk: 'Сума', es: 'Importe' },
+  },
+  {
+    key: 'free',
+    format: reedHuntFormats.free,
+    tab: { en: 'Free', ru: 'Свободное', uk: 'Довільне', es: 'Libre' },
+    label: { en: 'Any digits', ru: 'Любые цифры', uk: 'Будь-які цифри', es: 'Cualquier dígito' },
+  },
 ];
 
-let lang: Lang = navigator.language.startsWith('ru') ? 'ru' : 'en';
+const LANGS: ReedHuntLocale[] = ['en', 'ru', 'uk', 'es'];
+const browserLang = navigator.language.slice(0, 2) as ReedHuntLocale;
+let lang: ReedHuntLocale = LANGS.includes(browserLang) ? browserLang : 'en';
 let mode = MODES[0];
 
 const readout = document.getElementById('readout')!;
@@ -31,14 +48,14 @@ const tabs = document.querySelector<HTMLDivElement>('.tabs')!;
 const hunt = createReedHunt(document.getElementById('playground')!, {
   format: mode.format,
   label: mode.label[lang],
-  texts: lang === 'ru' ? RU : {},
+  locale: lang,
   onChange: (v) => (readout.textContent = JSON.stringify(v)),
-  onComplete: (v) => (readout.textContent = `${JSON.stringify(v)} ✓ complete`),
+  onComplete: (v) => (readout.textContent = `${JSON.stringify(v)} ✓`),
 });
 
 function renderTabs() {
   tabs.innerHTML = MODES.map(
-    (m) => `<button type="button" role="tab" data-mode="${m.key}" aria-selected="${m === mode}">${m[lang]}</button>`,
+    (m) => `<button type="button" role="tab" data-mode="${m.key}" aria-selected="${m === mode}">${m.tab[lang]}</button>`,
   ).join('');
 }
 
@@ -52,21 +69,21 @@ tabs.addEventListener('click', (e) => {
   renderTabs();
 });
 
-function setLang(next: Lang) {
+function setLang(next: ReedHuntLocale) {
   lang = next;
   document.documentElement.lang = lang;
   document.querySelectorAll<HTMLButtonElement>('[data-lang]').forEach((b) => {
     b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
   });
-  hunt.update({ label: mode.label[lang], texts: lang === 'ru' ? RU : {} });
+  hunt.update({ label: mode.label[lang], locale: lang });
   renderTabs();
 }
 
 document.querySelectorAll<HTMLButtonElement>('[data-lang]').forEach((b) =>
-  b.addEventListener('click', () => setLang(b.dataset.lang as Lang)),
+  b.addEventListener('click', () => setLang(b.dataset.lang as ReedHuntLocale)),
 );
 
 setLang(lang);
-if (import.meta.env.DEV) Object.assign(window, { hunt });
 mountReactDemo(document.getElementById('react-demo')!);
 mountVueDemo(document.getElementById('vue-demo')!);
+if (import.meta.env.DEV) Object.assign(window, { hunt });

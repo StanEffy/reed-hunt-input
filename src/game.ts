@@ -163,6 +163,23 @@ const RELOAD_EMPTY = 0.9;
 const RELOAD_MANUAL = 0.55;
 const GAME_OVER_DELAY = 0.9;
 
+/** The last marsh: no more top-ups, ammo trickles back, and something lives in the lake */
+export const FINAL_LEVEL = 3;
+/** Seconds per round that comes back on the final level */
+const REGEN_EVERY = 10;
+const MONSTER_FIRST = 6;
+const MONSTER_GAP_MIN = 16;
+const MONSTER_GAP_MAX = 26;
+/** Seconds from the far edge of the lake to the hunter's face */
+const MONSTER_FLIGHT = 7;
+const MONSTER_HP = 2;
+
+// 11×6, two frames: w = wing, b = body, e = eye
+const MONSTER_UP = ['w.........w', 'ww..b.b..ww', 'wwwbbbbbwww', '.wwbebebww.', '...bbbbb...', '....b.b....'];
+const MONSTER_DOWN = ['....b.b....', '...bbbbb...', '.wwbebebww.', 'wwwbbbbbwww', 'ww..bbb..ww', 'w....b....w'];
+
+export type GameOverReason = 'ammo' | 'eaten';
+
 function mulberry32(seed: number) {
   let a = seed;
   return () => {
@@ -205,6 +222,15 @@ interface Floater {
   color: Rgb;
 }
 
+interface Monster {
+  side: -1 | 1;
+  /** 0 at the horizon, 1 in the hunter's face */
+  p: number;
+  age: number;
+  hp: number;
+  flash: number;
+}
+
 interface Reed {
   x: number;
   h: number;
@@ -218,8 +244,8 @@ export interface GameCallbacks {
   getFill: () => { filled: number; max: number; complete: boolean };
   onDigit: (digit: string) => void;
   onErase: () => void;
-  /** Ammo is gone and the input is not complete */
-  onGameOver: () => void;
+  /** 'ammo': gone before the input was complete; 'eaten': the final level's monster got through */
+  onGameOver: (reason: GameOverReason) => void;
   /** Rounds left (in the gun plus spare) changed */
   onAmmo?: (left: number) => void;
 }
@@ -256,6 +282,11 @@ export class ReedHuntGame {
   private recoil = 0;
   private flash = 0;
   private lightning = 0;
+  private capacity = 0;
+  private regenT = 0;
+  private monster: Monster | null = null;
+  private monsterIn = MONSTER_FIRST;
+  private redFlash = 0;
   private aim = { x: W / 2, y: H / 3 };
   private pointerInside = false;
   private raf = 0;
@@ -290,6 +321,10 @@ export class ReedHuntGame {
     return this.over;
   }
 
+  get isFinal() {
+    return this.level >= FINAL_LEVEL;
+  }
+
   setDusk(dusk: boolean) {
     if (dusk === this.dusk) return;
     this.dusk = dusk;
@@ -312,6 +347,10 @@ export class ReedHuntGame {
     this.outFor = 0;
     this.reloadLeft = 0;
     this.spawnIn = 0.6;
+    this.monster = null;
+    this.monsterIn = MONSTER_FIRST;
+    this.regenT = 0;
+    this.redFlash = 0;
     if (!this.running) this.draw();
   }
 
@@ -379,6 +418,16 @@ export class ReedHuntGame {
       }
     }
 
+    // ...unless the thing from the lake is closer to the crosshair
+    if (this.monster) {
+      const m = this.monsterPos(this.monster);
+      const d = Math.hypot(m.x - x, m.y - y);
+      if (d < m.radius && (!best || d < bestD)) {
+        this.hitMonster(this.monster, m.x, m.y);
+        return;
+      }
+    }
+
     if (!best) {
       this.burst(x, y, 4, ['#d9d2c0', '#a89f8a'], 18, 0);
       return;
@@ -405,8 +454,37 @@ export class ReedHuntGame {
 
   // ---------- simulation ----------
 
+  private hitMonster(m: Monster, x: number, y: number) {
+    m.hp -= 1;
+    m.flash = 0.12;
+    m.p = Math.max(0, m.p - 0.08); // knocked back a little
+    this.burst(x, y, 8, ['#3a1424', '#1a0a12', '#ff2a2a'], 30, 20);
+    if (m.hp > 0) return;
+    this.burst(x, y, 24, ['#3a1424', '#1a0a12', '#ff2a2a', '#7a1410'], 50, 30);
+    this.monster = null;
+    this.monsterIn = MONSTER_GAP_MIN + this.rand() * (MONSTER_GAP_MAX - MONSTER_GAP_MIN);
+  }
+
+  /** Where the monster is now, how big its pixels are and how easy it is to hit */
+  private monsterPos(m: Monster) {
+    const e = m.p * m.p; // slow out of the haze, then a rush
+    const x0 = m.side < 0 ? 6 : W - 6;
+    const y0 = 71;
+    const x1 = HUNTER_X;
+    const y1 = 88;
+    const scale = 1 + Math.floor(e * 3.2);
+    return {
+      x: x0 + (x1 - x0) * e + Math.sin(m.age * 2.3) * 4 * (1 - e),
+      y: y0 + (y1 - y0) * e - Math.sin(e * Math.PI) * 16 + Math.sin(m.age * 7) * 1.5,
+      scale,
+      e,
+      radius: Math.max(HIT_RADIUS, 4.5 * scale),
+    };
+  }
+
   private loadAmmo(total: number) {
     const n = Math.max(0, Math.floor(total));
+    this.capacity = n;
     this.shells = Math.min(2, n);
     this.reserve = n - this.shells;
     this.cb.onAmmo?.(this.ammoLeft);
@@ -433,14 +511,18 @@ export class ReedHuntGame {
     this.recoil = Math.max(0, this.recoil - dt);
     this.flash = Math.max(0, this.flash - dt);
 
-    // Out of ammo: give the last bird time to fall, then end the game unless the input is done
-    if (!this.over && this.ammoLeft === 0) {
+    // Out of ammo: give the last bird time to fall, then end the game unless the input is done.
+    // Not on the final level: there ammo comes back on its own.
+    if (!this.over && !this.isFinal && this.ammoLeft === 0) {
       this.outFor += dt;
       if (this.outFor >= GAME_OVER_DELAY && !this.cb.getFill().complete) {
         this.over = true;
-        this.cb.onGameOver();
+        this.cb.onGameOver('ammo');
       }
     }
+
+    if (this.isFinal && !this.over) this.updateFinal(dt);
+    this.redFlash = Math.max(0, this.redFlash - dt);
 
     if (this.palette.weather === 'storm') {
       this.lightning = Math.max(0, this.lightning - dt);
@@ -485,6 +567,40 @@ export class ReedHuntGame {
       f.y -= dt * 10;
     }
     this.floaters = this.floaters.filter((f) => f.life > 0);
+  }
+
+  private updateFinal(dt: number) {
+    // A round trickles back now and then
+    this.regenT += dt;
+    if (this.regenT >= REGEN_EVERY) {
+      this.regenT = 0;
+      if (this.ammoLeft < this.capacity) {
+        if (this.shells < 2 && this.reloadLeft <= 0) this.shells += 1;
+        else this.reserve += 1;
+        this.cb.onAmmo?.(this.ammoLeft);
+        this.floaters.push({ text: '+1', x: 24, y: H - 22, life: 1.2, color: '#9be26a' });
+      }
+    }
+
+    // Something flies out of the far edge of the lake, straight at the hunter
+    if (!this.monster) {
+      this.monsterIn -= dt;
+      if (this.monsterIn <= 0) {
+        this.monster = { side: this.rand() < 0.5 ? -1 : 1, p: 0, age: 0, hp: MONSTER_HP, flash: 0 };
+      }
+      return;
+    }
+    const m = this.monster;
+    m.age += dt;
+    m.flash = Math.max(0, m.flash - dt);
+    m.p += (dt / MONSTER_FLIGHT) * this.options.speed;
+    if (m.p >= 1) {
+      this.monster = null;
+      this.over = true;
+      this.redFlash = 0.6;
+      this.burst(HUNTER_X, 86, 30, ['#ff2a2a', '#7a1410', '#1a0a12'], 60, 40);
+      this.cb.onGameOver('eaten');
+    }
   }
 
   private spawn() {
@@ -739,6 +855,24 @@ export class ReedHuntGame {
     }
   }
 
+  private drawMonster() {
+    const m = this.monster;
+    if (!m) return;
+    const { x, y, scale } = this.monsterPos(m);
+    const frame = Math.floor(m.age * 8) % 2 === 0 ? MONSTER_UP : MONSTER_DOWN;
+    const ox = Math.round(x - (11 * scale) / 2);
+    const oy = Math.round(y - (6 * scale) / 2);
+    const colors: Record<string, Rgb> =
+      m.flash > 0
+        ? { w: '#ffffff', b: '#ffffff', e: '#ff2a2a' }
+        : { w: '#3a1424', b: '#1a0a12', e: Math.floor(m.age * 4) % 2 ? '#ff2a2a' : '#ff6a55' };
+    frame.forEach((row, ry) =>
+      [...row].forEach((ch, rx) => {
+        if (ch !== '.') this.px(ox + rx * scale, oy + ry * scale, scale, scale, colors[ch]);
+      }),
+    );
+  }
+
   private aimAngle() {
     let a = Math.atan2(this.aim.y - SHOULDER.y, this.aim.x - SHOULDER.x);
     // Only point upwards
@@ -843,9 +977,13 @@ export class ReedHuntGame {
     }
 
     this.drawReeds(this.backReeds, 84, false);
+    // Far away it is behind everything; once it is close it is in front of the reeds
+    const monsterNear = !!this.monster && this.monster.p > 0.7;
+    if (!monsterNear) this.drawMonster();
     for (const t of this.targets) this.drawTarget(t);
     this.drawHunter();
     this.drawReeds(this.frontReeds, H, true);
+    if (monsterNear) this.drawMonster();
     this.drawWeather();
 
     for (const p of this.particles) {
@@ -858,6 +996,11 @@ export class ReedHuntGame {
     if (this.lightning > 0) {
       ctx.globalAlpha = 0.35;
       this.px(0, 0, W, H, '#dfe6ff');
+      ctx.globalAlpha = 1;
+    }
+    if (this.redFlash > 0) {
+      ctx.globalAlpha = Math.min(0.6, this.redFlash);
+      this.px(0, 0, W, H, '#c8102e');
       ctx.globalAlpha = 1;
     }
 

@@ -1,4 +1,5 @@
-import { ReedHuntGame } from './game';
+import { ReedHuntGame, type GameOverReason } from './game';
+import { reedHuntLocales, type ReedHuntLocale, type ReedHuntTexts } from './locales';
 import {
   ammoFor,
   digitCapacity,
@@ -11,27 +12,10 @@ import {
 } from './formats';
 import { injectStyles } from './styles';
 
-export interface ReedHuntTexts {
-  hint: string;
-  gameOver: string;
-  outOfAmmo: string;
-  dontWorry: string;
-  refill: string;
-  refilling: string;
-  ammoLeft: (rounds: number) => string;
-  currency: string;
-}
+export type { ReedHuntTexts, ReedHuntLocale, GameOverReason };
 
-export const defaultTexts: ReedHuntTexts = {
-  hint: 'Shoot the digits. The red cross erases the last one. Right click reloads.',
-  gameOver: 'Game over',
-  outOfAmmo: 'Your free ammo has run out.',
-  dontWorry: "But don't worry: top up your ammo for just €1.",
-  refill: 'Top up for €1',
-  refilling: 'Processing…',
-  ammoLeft: (n) => `${n} rounds left`,
-  currency: 'Currency',
-};
+/** English texts, kept for backwards compatibility; see `reedHuntLocales` */
+export const defaultTexts: ReedHuntTexts = reedHuntLocales.en;
 
 export type ReedHuntTheme = 'auto' | 'light' | 'dark';
 
@@ -48,6 +32,9 @@ export interface ReedHuntData {
   /** Rounds per game. Defaults to `ammoFactor` × the digits needed, rounded up */
   ammo?: number;
   ammoFactor?: number;
+  /** Built-in texts: 'en' (default), 'ru', 'uk', 'es' */
+  locale?: ReedHuntLocale;
+  /** Overrides on top of the locale */
   texts?: Partial<ReedHuntTexts>;
   label?: string;
   /** Name of the hidden form field that holds the digits */
@@ -68,8 +55,11 @@ export interface ReedHuntCallbacks {
   /** Every slot of a mask is filled */
   onComplete?: (value: string) => void;
   onCurrencyChange?: (currency: string) => void;
-  /** Ammo ran out before the input was done */
-  onGameOver?: () => void;
+  /**
+   * 'ammo': ran out before the input was done (offers a paid top-up).
+   * 'eaten': on the final level, the thing from the lake reached the hunter (offers a restart).
+   */
+  onGameOver?: (reason: GameOverReason) => void;
   /**
    * The "top up" button on the game over screen. Resolve true to start the next, gloomier
    * level with fresh ammo and an empty value. The default just says yes after a moment.
@@ -131,6 +121,7 @@ export class ReedHunt {
   private landed = -1;
   private level = 0;
   private over = false;
+  private overReason: GameOverReason = 'ammo';
   private refilling = false;
   private ammoLeft = 0;
   private onScreen = typeof IntersectionObserver === 'undefined';
@@ -202,12 +193,13 @@ export class ReedHunt {
           },
           onDigit: (d) => this.commit(this.value + d),
           onErase: () => this.commit(this.value.slice(0, -1)),
-          onGameOver: () => {
+          onGameOver: (reason) => {
             this.over = true;
+            this.overReason = reason;
             this.renderOverlay();
             this.syncInput();
             this.refillBtn.focus({ preventScroll: true });
-            this.opts.onGameOver?.();
+            this.opts.onGameOver?.(reason);
           },
           onAmmo: (n) => {
             this.ammoLeft = n;
@@ -268,10 +260,12 @@ export class ReedHunt {
 
   /** Clears the value and starts again from the first level with full ammo */
   reset() {
+    const hadValue = this.value !== '';
     this.value = '';
     this.landed = -1;
     this.newGame(0);
     this.render();
+    if (hadValue) this.opts.onChange?.('');
   }
 
   focus() {
@@ -293,7 +287,7 @@ export class ReedHunt {
   }
 
   private get texts(): ReedHuntTexts {
-    return { ...defaultTexts, ...this.opts.texts };
+    return { ...reedHuntLocales[this.opts.locale ?? 'en'], ...this.opts.texts };
   }
 
   private get totalAmmo() {
@@ -307,6 +301,7 @@ export class ReedHunt {
   private newGame(level: number) {
     this.level = level;
     this.over = false;
+    this.overReason = 'ammo';
     this.game?.setLevel(level);
     this.game?.refill(this.totalAmmo);
     if (!this.game) this.ammoLeft = this.totalAmmo;
@@ -328,6 +323,11 @@ export class ReedHunt {
   }
 
   private async refill() {
+    // Eaten on the final level: no top-ups, everything starts over
+    if (this.overReason === 'eaten') {
+      this.reset();
+      return;
+    }
     if (this.refilling) return;
     this.refilling = true;
     this.renderOverlay();
@@ -477,11 +477,14 @@ export class ReedHunt {
   private renderOverlay() {
     const t = this.texts;
     this.overlay.hidden = !this.over;
+    const eaten = this.overReason === 'eaten';
+    this.overlay.classList.toggle('rh-overlay--eaten', eaten);
     this.overTitle.textContent = t.gameOver;
-    this.overText1.textContent = t.outOfAmmo;
-    this.overText2.textContent = t.dontWorry;
-    this.refillBtn.textContent = this.refilling ? t.refilling : t.refill;
-    this.refillBtn.disabled = this.refilling;
+    this.overText1.textContent = eaten ? t.eaten : t.outOfAmmo;
+    this.overText2.textContent = eaten ? '' : t.dontWorry;
+    this.overText2.hidden = eaten;
+    this.refillBtn.textContent = eaten ? t.retry : this.refilling ? t.refilling : t.refill;
+    this.refillBtn.disabled = !eaten && this.refilling;
   }
 
   private renderView() {

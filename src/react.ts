@@ -1,15 +1,16 @@
 import { createElement, forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-import { ReedHunt, type ReedHuntData, type ReedHuntOptions } from './ReedHunt';
+import { ReedHunt, type GameOverReason, type ReedHuntData, type ReedHuntOptions } from './ReedHunt';
 
 export { reedHuntFormats } from './formats';
 export type { ReedHuntFormat } from './formats';
-export type { ReedHuntTexts, ReedHuntTheme } from './ReedHunt';
+export type { ReedHuntTexts, ReedHuntTheme, ReedHuntLocale, GameOverReason } from './ReedHunt';
+export { reedHuntLocales } from './locales';
 
 export interface ReedHuntInputProps extends ReedHuntData {
   onValueChange?: (value: string) => void;
   onComplete?: (value: string) => void;
   onCurrencyChange?: (currency: string) => void;
-  onGameOver?: () => void;
+  onGameOver?: (reason: GameOverReason) => void;
   onRefill?: () => boolean | Promise<boolean>;
   injectStyles?: boolean;
   className?: string;
@@ -28,6 +29,7 @@ const dataOf = (p: ReedHuntInputProps): ReedHuntData => ({
   currencies: p.currencies,
   ammo: p.ammo,
   ammoFactor: p.ammoFactor,
+  locale: p.locale,
   texts: p.texts,
   label: p.label,
   name: p.name,
@@ -63,7 +65,7 @@ export const ReedHuntInput = forwardRef<ReedHuntInputHandle, ReedHuntInputProps>
       onCurrencyChange: latest.current.onCurrencyChange
         ? (c) => latest.current.onCurrencyChange?.(c)
         : undefined,
-      onGameOver: () => latest.current.onGameOver?.(),
+      onGameOver: (reason) => latest.current.onGameOver?.(reason),
       onRefill: latest.current.onRefill ? () => latest.current.onRefill!() : undefined,
     };
     widget.current = new ReedHunt(host, options);

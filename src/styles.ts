@@ -66,6 +66,7 @@ export const reedHuntCss = /* css */ `
   animation: rh-shake 0.5s steps(5, end) 1;
 }
 .rh-over-text { font-size: clamp(0.72rem, 2.7cqw, 0.95rem); }
+.rh-overlay--eaten { background: rgba(60, 0, 8, 0.82); }
 .rh-refill {
   margin-top: clamp(0.2rem, 1.5cqw, 0.6rem); padding: 0.45em 1.1em;
   font-family: var(--rh-font-mono); font-size: clamp(0.75rem, 2.8cqw, 1rem); font-weight: 700;

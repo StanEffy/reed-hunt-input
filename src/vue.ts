@@ -1,10 +1,18 @@
 import { defineComponent, h, onBeforeUnmount, onMounted, ref, watch, type PropType } from 'vue';
-import { ReedHunt, type ReedHuntData, type ReedHuntTexts, type ReedHuntTheme } from './ReedHunt';
+import {
+  ReedHunt,
+  type GameOverReason,
+  type ReedHuntData,
+  type ReedHuntLocale,
+  type ReedHuntTexts,
+  type ReedHuntTheme,
+} from './ReedHunt';
 import type { ReedHuntFormat } from './formats';
 
 export { reedHuntFormats } from './formats';
 export type { ReedHuntFormat } from './formats';
-export type { ReedHuntTexts, ReedHuntTheme } from './ReedHunt';
+export type { ReedHuntTexts, ReedHuntTheme, ReedHuntLocale, GameOverReason } from './ReedHunt';
+export { reedHuntLocales } from './locales';
 
 /**
  * Vue 3 wrapper around the ReedHunt widget.
@@ -21,6 +29,7 @@ export const ReedHuntInput = defineComponent({
     currencies: { type: Array as PropType<string[]>, default: undefined },
     ammo: { type: Number, default: undefined },
     ammoFactor: { type: Number, default: undefined },
+    locale: { type: String as PropType<ReedHuntLocale>, default: undefined },
     texts: { type: Object as PropType<Partial<ReedHuntTexts>>, default: undefined },
     label: { type: String, default: undefined },
     name: { type: String, default: undefined },
@@ -38,7 +47,7 @@ export const ReedHuntInput = defineComponent({
     'update:modelValue': (_value: string) => true,
     'update:currency': (_currency: string) => true,
     complete: (_value: string) => true,
-    gameOver: () => true,
+    gameOver: (_reason: GameOverReason) => true,
   },
   setup(props, { emit, expose }) {
     const host = ref<HTMLDivElement>();
@@ -51,6 +60,7 @@ export const ReedHuntInput = defineComponent({
       currencies: props.currencies,
       ammo: props.ammo,
       ammoFactor: props.ammoFactor,
+      locale: props.locale,
       texts: props.texts,
       label: props.label,
       name: props.name,
@@ -69,7 +79,7 @@ export const ReedHuntInput = defineComponent({
         onChange: (v) => emit('update:modelValue', v),
         onComplete: (v) => emit('complete', v),
         onCurrencyChange: (c) => emit('update:currency', c),
-        onGameOver: () => emit('gameOver'),
+        onGameOver: (reason) => emit('gameOver', reason),
         onRefill: () => (props.refill ? props.refill() : new Promise((r) => setTimeout(() => r(true), 700))),
       });
     });
